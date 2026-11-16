@@ -1,0 +1,118 @@
+<k-page-header title="Book an appointment" crumb="Contact" lede="Send a request and we’ll call you back to confirm a time. Prefer to talk? Call or WhatsApp us." />
+
+<div class="wrap page">
+  <section id="book" class="form-card" aria-labelledby="form-h">
+    @if (sent()) {
+      <div class="done" role="status">
+        <span class="done-ic"><k-icon name="check" /></span>
+        <h2 id="form-h">Request received</h2>
+        <p>Thank you. We’ll call {{ form.value.phone }} shortly to confirm your {{ isHome() ? 'home visit' : 'appointment' }}.</p>
+        <a [href]="brand.whatsappHref" target="_blank" rel="noopener" class="btn btn-ghost"><k-icon name="whatsapp" />Message us on WhatsApp</a>
+      </div>
+    } @else {
+      <h2 id="form-h">Appointment request</h2>
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="visit" role="radiogroup" aria-label="Type of visit">
+          <button type="button" role="radio" [attr.aria-checked]="!isHome()" (click)="setVisit('clinic')">
+            <k-icon name="user" /><span><strong>Clinic visit</strong><small>Visit us for your session</small></span>
+          </button>
+          <button type="button" role="radio" [attr.aria-checked]="isHome()" (click)="setVisit('home')">
+            <k-icon name="home" /><span><strong>Home visit</strong><small>We come to you</small></span>
+          </button>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="f-name">Patient name</label>
+            <input id="f-name" class="input" formControlName="name" autocomplete="name" />
+            @if (showError('name')) { <span class="error">Please enter the patient’s name.</span> }
+          </div>
+          <div class="field">
+            <label for="f-phone">Mobile number</label>
+            <input id="f-phone" class="input" formControlName="phone" type="tel" inputmode="tel" autocomplete="tel" />
+            @if (showError('phone')) { <span class="error">Enter a number we can call, like 98400 12345.</span> }
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="f-concern">Concern</label>
+            <select id="f-concern" class="input" formControlName="concern">
+              @for (c of concerns; track c) { <option [value]="c">{{ c }}</option> }
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-slot">Preferred time</label>
+            <select id="f-slot" class="input" formControlName="preferredSlot">
+              <option value="Morning">Morning</option>
+              <option value="Afternoon">Afternoon</option>
+              <option value="Evening">Evening</option>
+            </select>
+          </div>
+        </div>
+
+        @if (isHome()) {
+          <div class="row">
+            <div class="field">
+              <label for="f-area">Area / locality</label>
+              <input id="f-area" class="input" formControlName="area" autocomplete="address-level3" />
+              @if (showError('area')) { <span class="error">Please tell us your area.</span> }
+            </div>
+            <div class="field">
+              <label for="f-addr">Address</label>
+              <input id="f-addr" class="input" formControlName="address" autocomplete="street-address" placeholder="Door no., street, landmark" />
+              @if (showError('address')) { <span class="error">Please add your address.</span> }
+            </div>
+          </div>
+        }
+
+        <div class="field">
+          <label for="f-email">Email <span class="opt">(optional)</span></label>
+          <input id="f-email" class="input" formControlName="email" type="email" autocomplete="email" />
+          @if (showError('email')) { <span class="error">Please check the email address.</span> }
+        </div>
+
+        <div class="field">
+          <label for="f-msg">Tell us about the problem <span class="opt">(optional)</span></label>
+          <textarea id="f-msg" class="input" formControlName="message" placeholder="For example: knee pain for 3 months, worse on stairs."></textarea>
+        </div>
+
+        <input type="text" formControlName="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+        @if (error()) { <p class="error-box" role="alert">{{ error() }}</p> }
+
+        <button class="btn btn-primary submit" type="submit" [disabled]="sending()">
+          {{ sending() ? 'Sending…' : isHome() ? 'Request a home visit' : 'Request an appointment' }}
+        </button>
+      </form>
+    }
+  </section>
+
+  <aside class="side" aria-label="Contact details">
+    <a class="card" [href]="brand.phoneHref">
+      <span class="ic"><k-icon name="phone" /></span>
+      <span><small>Call us</small><strong>{{ brand.phone }}</strong></span>
+    </a>
+    <a class="card wa" [href]="brand.whatsappHref" target="_blank" rel="noopener">
+      <span class="ic"><k-icon name="whatsapp" /></span>
+      <span><small>WhatsApp</small><strong>Chat with us</strong></span>
+    </a>
+    <a class="card" [href]="'mailto:' + brand.email">
+      <span class="ic"><k-icon name="mail" /></span>
+      <span><small>Email</small><strong>{{ brand.email }}</strong></span>
+    </a>
+    @if (brand.address.length) {
+      <a class="card" [href]="brand.mapsHref || null" target="_blank" rel="noopener">
+        <span class="ic"><k-icon name="pin" /></span>
+        <span><small>Clinic</small><strong>{{ brand.address.join(', ') }}</strong></span>
+      </a>
+    }
+    <div class="hours">
+      <h3><k-icon name="clock" />Working hours</h3>
+      <p class="now" [class.open]="status.open">{{ status.text }}</p>
+      <dl>
+        @for (h of hours; track h.days) { <div><dt>{{ h.days }}</dt><dd>{{ h.time }}</dd></div> }
+      </dl>
+    </div>
+  </aside>
+</div>

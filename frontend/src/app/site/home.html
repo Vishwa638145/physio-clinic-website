@@ -1,0 +1,233 @@
+<!-- ── Hero ─────────────────────────────────────────── -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="tag rise" style="--d: 0ms"><k-icon name="shield" />Physiotherapy at the clinic and at home</p>
+      <h1 class="rise" style="--d: 80ms">Expert physiotherapy that gets you moving again</h1>
+      <p class="lede rise" style="--d: 160ms">
+        Personal, one-to-one treatment for pain, injuries and recovery after surgery, led by
+        {{ doctor.name }}, {{ doctor.qualifications }}.
+      </p>
+      <div class="actions rise" style="--d: 240ms">
+        <a routerLink="/contact" fragment="book" class="btn btn-primary"><k-icon name="calendar" />Book appointment</a>
+        <a [href]="brand.whatsappHref" target="_blank" rel="noopener" class="btn btn-ghost"><k-icon name="whatsapp" />Chat on WhatsApp</a>
+      </div>
+      <ul class="ticks rise" style="--d: 320ms">
+        <li><k-icon name="check" />{{ doctor.experienceYears }}+ years of experience</li>
+        <li><k-icon name="check" />One-to-one sessions</li>
+        <li><k-icon name="check" />Home visits available</li>
+      </ul>
+    </div>
+
+    <div class="hero-visual">
+      <div class="blob" aria-hidden="true"></div>
+      <k-photo class="hero-photo pop" [src]="photos.hero.src" [alt]="photos.hero.alt" [eager]="true" />
+      <div class="float f-doc">
+        <span class="avatar" aria-hidden="true">{{ doctor.initials }}</span>
+        <span><strong>{{ doctor.name }}</strong><small>{{ doctor.title }}</small></span>
+      </div>
+      <div class="float f-home">
+        <span class="f-ic"><k-icon name="home" /></span>
+        <span><strong>Home visits</strong><small>across {{ brand.city }}</small></span>
+      </div>
+      @if (brand.googleRating; as r) {
+        <a class="float f-rate" [href]="r.href" target="_blank" rel="noopener">
+          <span class="stars" aria-hidden="true">★★★★★</span>
+          <span><strong class="num">{{ r.score }} on Google</strong><small>{{ r.count }} reviews</small></span>
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ── Call back ────────────────────────────────────── -->
+<section class="wrap cb-wrap" aria-labelledby="cb-h">
+  <div class="cb-card">
+    <div class="cb-head">
+      <span class="cb-ic"><k-icon name="phone" /></span>
+      <div>
+        <h2 id="cb-h">Request a call back</h2>
+        <p>Leave your details and we’ll call you to book a convenient time.</p>
+      </div>
+    </div>
+    <k-callback-form />
+  </div>
+</section>
+
+<!-- ── Why us ───────────────────────────────────────── -->
+<section class="wrap why" aria-labelledby="why-h">
+  <h2 id="why-h" class="visually-hidden">Why patients choose us</h2>
+  <ul>
+    @for (w of why; track w.title) {
+      <li>
+        <span class="why-ic"><k-icon [name]="w.icon" /></span>
+        <h3>{{ w.title }}</h3>
+        <p>{{ w.text }}</p>
+      </li>
+    }
+  </ul>
+</section>
+
+<!-- ── Services ─────────────────────────────────────── -->
+<section class="services" aria-labelledby="svc-h">
+  <div class="wrap">
+    <div class="head-row">
+      <div>
+        <p class="kicker">Our services</p>
+        <h2 id="svc-h" class="sec-title">Treatment for every stage of recovery</h2>
+      </div>
+      <a routerLink="/services" class="btn btn-ghost">View all services<k-icon name="arrow" /></a>
+    </div>
+
+    <ul class="svc-grid">
+      @for (s of services; track s.slug) {
+        <li class="svc">
+          <a [routerLink]="['/services']" [fragment]="s.slug" class="svc-link">
+            <k-photo class="svc-img" [src]="s.image" [alt]="''" />
+            <span class="svc-ic"><k-icon [name]="s.icon" /></span>
+            <div class="svc-body">
+              <h3>{{ s.name }}</h3>
+              <p>{{ s.short }}</p>
+              <span class="more">Learn more<k-icon name="arrow" /></span>
+            </div>
+          </a>
+        </li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- ── About the physiotherapist ────────────────────── -->
+<section class="wrap about" aria-labelledby="about-h">
+  <div class="about-visual">
+    <div class="portrait">
+      @if (!doctorPhotoFailed) {
+        <img [src]="doctor.photo" [alt]="doctor.name" loading="lazy" (error)="doctorPhotoFailed = true" />
+      } @else {
+        <div class="mono" aria-hidden="true"><span>{{ doctor.initials }}</span></div>
+      }
+    </div>
+    <div class="exp">
+      <strong class="num">{{ doctor.experienceYears }}+</strong>
+      <span>years of clinical experience</span>
+    </div>
+  </div>
+  <div class="about-copy">
+    <p class="kicker">Meet your physiotherapist</p>
+    <h2 id="about-h" class="sec-title">{{ doctor.name }}</h2>
+    <p class="about-role">{{ doctor.title }}, {{ doctor.qualifications }}</p>
+    <p class="about-intro">{{ doctor.intro }}</p>
+    <ul class="creds">
+      @for (c of doctor.credentials; track c) { <li><k-icon name="check" />{{ c }}</li> }
+    </ul>
+    <div class="focus">
+      @for (f of doctor.focus; track f) { <span>{{ f }}</span> }
+    </div>
+    <div class="actions">
+      <a routerLink="/contact" fragment="book" class="btn btn-primary">Book a consultation</a>
+      <a routerLink="/about" class="btn btn-ghost">Read full profile</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Conditions ───────────────────────────────────── -->
+<section id="conditions" class="conditions" aria-labelledby="cond-h">
+  <div class="wrap">
+    <div class="center-head">
+      <p class="kicker">Conditions we treat</p>
+      <h2 id="cond-h" class="sec-title">Where does it hurt?</h2>
+      <p class="sec-lede">Tap the area that’s troubling you, or search by condition, to see how we can help.</p>
+    </div>
+    <k-body-map />
+  </div>
+</section>
+
+<!-- ── Process ──────────────────────────────────────── -->
+<section class="wrap process" aria-labelledby="proc-h">
+  <div class="center-head">
+    <p class="kicker">How it works</p>
+    <h2 id="proc-h" class="sec-title">Your path to recovery</h2>
+  </div>
+  <ol class="steps">
+    @for (p of process; track p.title; let i = $index) {
+      <li>
+        <span class="step-n num">{{ i + 1 }}</span>
+        <h3>{{ p.title }}</h3>
+        <p>{{ p.text }}</p>
+      </li>
+    }
+  </ol>
+</section>
+
+<!-- ── Home visits ──────────────────────────────────── -->
+<section class="homecare" aria-labelledby="home-h">
+  <div class="wrap homecare-grid">
+    <k-photo class="hc-photo" [src]="photos.homeVisit.src" [alt]="photos.homeVisit.alt" label="Home physiotherapy" />
+    <div class="hc-copy">
+      <p class="kicker light">Home physiotherapy</p>
+      <h2 id="home-h" class="sec-title">Can’t travel? We’ll come to you.</h2>
+      <p class="hc-lede">
+        Professional physiotherapy in the comfort of your home across {{ brand.city }}, ideal after surgery, a stroke, or for
+        elderly family members.
+      </p>
+      <ul class="hc-list">
+        @for (b of home.benefits; track b) { <li><k-icon name="check" />{{ b }}</li> }
+      </ul>
+      <div class="actions">
+        <a routerLink="/contact" [queryParams]="{ visit: 'home' }" fragment="book" class="btn btn-light">Book a home visit</a>
+        <a routerLink="/home-physiotherapy" class="btn hc-ghost">How it works</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Reviews (only when real reviews are added) ───── -->
+@if (reviews.length) {
+  <section class="wrap reviews" aria-labelledby="rev-h">
+    <div class="center-head">
+      <p class="kicker">Patient stories</p>
+      <h2 id="rev-h" class="sec-title">What patients say</h2>
+    </div>
+    <ul>
+      @for (r of reviews; track r.name) {
+        <li>
+          <span class="stars" aria-hidden="true">★★★★★</span>
+          <blockquote>{{ r.text }}</blockquote>
+          <p><strong>{{ r.name }}</strong>@if (r.condition) { <span>{{ r.condition }}</span> }</p>
+        </li>
+      }
+    </ul>
+  </section>
+}
+
+<!-- ── FAQ ──────────────────────────────────────────── -->
+<section class="wrap faq" aria-labelledby="faq-h">
+  <div>
+    <p class="kicker">FAQ</p>
+    <h2 id="faq-h" class="sec-title">Questions patients often ask</h2>
+    <p class="sec-lede">Can’t find your answer? Call or WhatsApp us and we’ll be happy to help.</p>
+    <a [href]="brand.phoneHref" class="btn btn-ghost faq-call"><k-icon name="phone" />{{ brand.phone }}</a>
+  </div>
+  <div class="faq-list">
+    @for (f of faqs; track f.q; let first = $first) {
+      <details [open]="first">
+        <summary>{{ f.q }}<span class="pm" aria-hidden="true"></span></summary>
+        <p>{{ f.a }}</p>
+      </details>
+    }
+  </div>
+</section>
+
+<!-- ── CTA band ─────────────────────────────────────── -->
+<section class="wrap cta-wrap">
+  <div class="cta">
+    <div>
+      <h2>Ready to start feeling better?</h2>
+      <p>Book your first assessment today, at the clinic or at home.</p>
+    </div>
+    <div class="actions">
+      <a routerLink="/contact" fragment="book" class="btn btn-light"><k-icon name="calendar" />Book appointment</a>
+      <a [href]="brand.phoneHref" class="btn cta-ghost"><k-icon name="phone" />Call now</a>
+    </div>
+  </div>
+</section>

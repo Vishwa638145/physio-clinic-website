@@ -1,0 +1,95 @@
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="topbar">
+  <div class="wrap topbar-row">
+    <p class="status" [class.is-open]="status().open"><span class="dot" aria-hidden="true"></span>{{ status().text }}</p>
+    <div class="topbar-links">
+      <a [href]="'mailto:' + brand.email" class="hide-sm"><k-icon name="mail" />{{ brand.email }}</a>
+      <a [href]="brand.phoneHref"><k-icon name="phone" />{{ brand.phone }}</a>
+    </div>
+  </div>
+</div>
+
+<header class="header" [class.scrolled]="scrolled()">
+  <div class="wrap bar">
+    <a routerLink="/" class="home" [attr.aria-label]="brand.name + ' home'"><k-wordmark /></a>
+
+    <nav id="site-nav" [class.open]="menu()" aria-label="Main">
+      <a routerLink="/" routerLinkActive="current" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+      <a routerLink="/about" routerLinkActive="current">About</a>
+      <a routerLink="/services" routerLinkActive="current">Services</a>
+      <a routerLink="/home-physiotherapy" routerLinkActive="current">Home visits</a>
+      <a routerLink="/contact" routerLinkActive="current">Contact</a>
+      <a routerLink="/contact" fragment="book" class="btn btn-primary nav-cta"><k-icon name="calendar" />Book appointment</a>
+    </nav>
+
+    <button class="menu-btn" type="button" [attr.aria-expanded]="menu()" aria-controls="site-nav" (click)="menu.set(!menu())">
+      <span class="visually-hidden">{{ menu() ? 'Close menu' : 'Open menu' }}</span>
+      <span class="burger" [class.x]="menu()" aria-hidden="true"><i></i><i></i><i></i></span>
+    </button>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <router-outlet />
+</main>
+
+<footer class="footer">
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <k-wordmark tone="light" />
+      <p>Personal, one-to-one physiotherapy at the clinic and at home in {{ brand.city }}. Assessment-led care that gets you moving again.</p>
+      <div class="foot-cta">
+        <a [href]="brand.whatsappHref" target="_blank" rel="noopener" class="btn btn-accent btn-sm"><k-icon name="whatsapp" />WhatsApp us</a>
+      </div>
+    </div>
+    <div>
+      <h2>Quick links</h2>
+      <ul>
+        <li><a routerLink="/about">About the physiotherapist</a></li>
+        <li><a routerLink="/services">Services</a></li>
+        <li><a routerLink="/home-physiotherapy">Physiotherapy at home</a></li>
+        <li><a routerLink="/contact">Contact and booking</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Services</h2>
+      <ul>
+        @for (s of services.slice(0, 6); track s.slug) {
+          <li><a routerLink="/services" [fragment]="s.slug">{{ s.name }}</a></li>
+        }
+      </ul>
+    </div>
+    <div>
+      <h2>Get in touch</h2>
+      <ul class="contact">
+        <li><k-icon name="phone" /><a [href]="brand.phoneHref">{{ brand.phone }}</a></li>
+        <li><k-icon name="mail" /><a [href]="'mailto:' + brand.email">{{ brand.email }}</a></li>
+        @if (brand.address.length) {
+          <li><k-icon name="pin" /><span>{{ brand.address.join(', ') }}</span></li>
+        }
+        <li><k-icon name="clock" /><span>@for (h of hours; track h.days) { {{ h.days }}: {{ h.time }}<br /> }</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="wrap foot-base">
+    <span>© {{ year }} {{ brand.name }}. All rights reserved.</span>
+    <span class="foot-base-links">
+      @if (brand.instagram) { <a [href]="brand.instagram" target="_blank" rel="noopener">Instagram</a> }
+      @if (brand.facebook) { <a [href]="brand.facebook" target="_blank" rel="noopener">Facebook</a> }
+      <a routerLink="/studio">Staff login</a>
+    </span>
+  </div>
+</footer>
+
+<!-- Desktop: floating WhatsApp -->
+<a class="wa-float" [href]="brand.whatsappHref" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+  <k-icon name="whatsapp" />
+</a>
+
+<!-- Phone: quick actions -->
+<nav class="actionbar" aria-label="Quick actions">
+  <a [href]="brand.phoneHref"><k-icon name="phone" />Call</a>
+  <a [href]="brand.whatsappHref" target="_blank" rel="noopener"><k-icon name="whatsapp" />WhatsApp</a>
+  <a routerLink="/contact" fragment="book" class="primary"><k-icon name="calendar" />Book</a>
+</nav>

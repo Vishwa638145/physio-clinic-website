@@ -1,0 +1,145 @@
+<header class="head">
+  <div>
+    <h1>Campaigns</h1>
+    @if (state.account(); as acc) {
+      <p class="sub">{{ running() }} running in {{ acc.name }}</p>
+    }
+  </div>
+  <div class="controls">
+    @if (state.accounts().length > 1) {
+      <label class="visually-hidden" for="ov-acc">Ad account</label>
+      <select id="ov-acc" class="input" [value]="state.account()?.id" (change)="onAccount($any($event.target).value)">
+        @for (a of state.accounts(); track a.id) { <option [value]="a.id" [selected]="a.id === state.account()?.id">{{ a.name }}</option> }
+      </select>
+    }
+    <label class="visually-hidden" for="ov-preset">Date range</label>
+    <select id="ov-preset" class="input" [value]="state.preset()" (change)="onPreset($any($event.target).value)">
+      @for (p of presets; track p.value) { <option [value]="p.value" [selected]="p.value === state.preset()">{{ p.label }}</option> }
+    </select>
+    <a routerLink="/studio/new" class="btn btn-primary">New ad</a>
+  </div>
+</header>
+
+@if (state.error()) {
+  <div class="notice is-error" role="alert">
+    <p>{{ state.error() }}</p>
+    <a routerLink="/studio/settings">Check the Meta connection</a>
+  </div>
+} @else if (state.status() && !state.connected()) {
+  <div class="empty">
+    <h2>Connect the clinic’s Meta account</h2>
+    <p>Once connected, campaigns from your Facebook and Instagram ad account appear here.</p>
+    <a routerLink="/studio/settings" class="btn btn-primary">Connect Meta account</a>
+  </div>
+} @else {
+  @if (error()) { <p class="notice is-error" role="alert">{{ error() }}</p> }
+
+  <section class="kpis" aria-label="Totals for the selected period" [class.dim]="loading()">
+    <div>
+      <p class="k-label">Spent</p>
+      <p class="k-value num">{{ totals().spend | money: state.currency() }}</p>
+    </div>
+    <div>
+      <p class="k-label">Link clicks</p>
+      <p class="k-value num">{{ totals().linkClicks | count }}</p>
+    </div>
+    <div>
+      <p class="k-label">Cost per link click</p>
+      <p class="k-value num">{{ totals().cpc | money: state.currency() : 2 }}</p>
+    </div>
+    <div>
+      <p class="k-label">People reached</p>
+      <p class="k-value num">{{ totals().reach | count: 'compact' }}</p>
+    </div>
+  </section>
+
+  <section class="chart-block" aria-label="Daily spend">
+    <k-spend-chart [points]="daily()" [currency]="state.currency()" />
+  </section>
+
+  <section aria-label="Campaign list">
+    @if (!loading() && campaigns().length === 0) {
+      <div class="empty">
+        <h2>No campaigns yet</h2>
+        <p>Your first ad takes about five minutes: pick a goal, set the area around the clinic, add a photo and some text.</p>
+        <a routerLink="/studio/new" class="btn btn-primary">Create the first ad</a>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="campaigns">
+          <thead>
+            <tr>
+              <th scope="col">Campaign</th>
+              <th scope="col">Delivery</th>
+              <th scope="col" class="r">Daily budget</th>
+              <th scope="col" class="r">Spent</th>
+              <th scope="col" class="r">Link clicks</th>
+              <th scope="col" class="r">Cost per click</th>
+              <th scope="col" class="r">CTR</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of campaigns(); track c.id) {
+              <tr [class.open]="openId() === c.id">
+                <td>
+                  <button class="name" type="button" (click)="expand(c)" [attr.aria-expanded]="openId() === c.id">
+                    {{ c.name }}
+                  </button>
+                  <span class="obj">{{ objectiveLabel[c.objective] ?? c.objective }}</span>
+                </td>
+                <td><span class="pill" [class]="'pill ' + (c.effectiveStatus | deliveryTone)">{{ c.effectiveStatus | deliveryLabel }}</span></td>
+                <td class="r num">{{ c.dailyBudget | money: state.currency() }}</td>
+                <td class="r num">{{ c.insights.spend | money: state.currency() }}</td>
+                <td class="r num">{{ c.insights.linkClicks | count }}</td>
+                <td class="r num">{{ c.insights.linkClicks ? (c.insights.spend / c.insights.linkClicks | money: state.currency() : 2) : '—' }}</td>
+                <td class="r num">{{ c.insights.impressions ? c.insights.ctr.toFixed(2) + '%' : '—' }}</td>
+                <td class="act">
+                  <button
+                    type="button"
+                    class="switch"
+                    role="switch"
+                    [attr.aria-checked]="c.status === 'ACTIVE'"
+                    [attr.aria-label]="(c.status === 'ACTIVE' ? 'Pause ' : 'Run ') + c.name"
+                    [disabled]="busyId() === c.id"
+                    (click)="toggle(c)"
+                  >
+                    <span></span>
+                  </button>
+                </td>
+              </tr>
+              @if (openId() === c.id) {
+                <tr class="detail">
+                  <td colspan="8">
+                    @if (adsMessage(c.id); as msg) {
+                      <p class="muted">{{ msg }}</p>
+                    }
+                    @for (ad of adsFor(c.id) ?? []; track ad.id) {
+                      <div class="ad">
+                        <div class="thumb">
+                          @if (ad.thumbnailUrl) { <img [src]="ad.thumbnailUrl" alt="" /> } @else { <span>No preview</span> }
+                        </div>
+                        <div class="ad-copy">
+                          <p class="ad-title">{{ ad.title || ad.name }}</p>
+                          @if (ad.body) { <p class="ad-body">{{ ad.body }}</p> }
+                          @if (ad.reviewFeedback) { <p class="ad-review">Meta review: {{ ad.reviewFeedback }}</p> }
+                          <p class="ad-meta">
+                            <span [class]="'pill ' + (ad.effectiveStatus | deliveryTone)">{{ ad.effectiveStatus | deliveryLabel }}</span>
+                            <span class="num">{{ ad.insights.impressions | count }} impressions</span>
+                          </p>
+                        </div>
+                      </div>
+                    }
+                    @if (!state.isDemo()) {
+                      <a class="mgr" [href]="managerUrl(c)" target="_blank" rel="noopener">Open in Meta Ads Manager</a>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}

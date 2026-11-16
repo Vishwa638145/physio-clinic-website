@@ -1,0 +1,283 @@
+@if (result(); as r) {
+  <section class="done" aria-live="polite">
+    <h1>{{ r.status === 'ACTIVE' ? 'Sent to Meta for review.' : 'Saved as paused.' }}</h1>
+    <p>
+      @if (r.status === 'ACTIVE') {
+        Meta usually reviews ads within 24 hours. It starts delivering as soon as it’s approved, and you’ll see it on the
+        Campaigns screen as “In review” until then.
+      } @else {
+        The campaign, ad set and ad are created in the ad account but won’t spend anything. Switch it on from the
+        Campaigns screen when you’re ready.
+      }
+    </p>
+    <dl class="ids num">
+      <div><dt>Campaign</dt><dd>{{ r.campaignId }}</dd></div>
+      <div><dt>Ad set</dt><dd>{{ r.adSetId }}</dd></div>
+      <div><dt>Ad</dt><dd>{{ r.adId }}</dd></div>
+    </dl>
+    <div class="done-actions">
+      <a routerLink="/studio" class="btn btn-primary">Go to campaigns</a>
+      <button type="button" class="btn btn-ghost" (click)="startAnother()">Create another ad</button>
+      @if (!state.isDemo()) {
+        <a [href]="managerUrl(r)" target="_blank" rel="noopener" class="ext">Open in Meta Ads Manager</a>
+      }
+    </div>
+  </section>
+} @else {
+  <header class="head">
+    <h1>New ad</h1>
+    <p>
+      Creates a complete Facebook and Instagram ad
+      @if (state.page(); as p) { for <strong>{{ p.name }}</strong> }
+      @if (state.account(); as a) { in <strong>{{ a.name }}</strong> }.
+    </p>
+  </header>
+
+  <div class="layout">
+    <form [formGroup]="form" class="steps" (ngSubmit)="$event.preventDefault()" novalidate>
+      <!-- GOAL -->
+      <fieldset>
+        <legend>Goal</legend>
+        <div class="field">
+          <label for="c-name">Campaign name</label>
+          <input id="c-name" class="input" formControlName="name" placeholder="Knee rehab · Anna Nagar · November" />
+          <span class="hint">Only you see this. It also tags website visits, so enquiries show which ad they came from.</span>
+          @if (err('name')) { <span class="error">Give the campaign a name of at least 3 characters.</span> }
+        </div>
+
+        <div class="choices" role="radiogroup" aria-label="What should this ad do?">
+          <label class="choice" [class.on]="form.value.objective === 'OUTCOME_TRAFFIC'">
+            <input type="radio" formControlName="objective" value="OUTCOME_TRAFFIC" />
+            <span class="c-title">Bring people to the booking page</span>
+            <span class="c-text">Meta shows the ad to people most likely to click through. Best for filling appointment slots.</span>
+          </label>
+          <label class="choice" [class.on]="form.value.objective === 'OUTCOME_AWARENESS'">
+            <input type="radio" formControlName="objective" value="OUTCOME_AWARENESS" />
+            <span class="c-title">Get known in the neighbourhood</span>
+            <span class="c-text">Reaches as many nearby people as possible. Good for a new clinic or a new service.</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <!-- AUDIENCE -->
+      <fieldset>
+        <legend>Who sees it</legend>
+
+        <div class="seg" role="radiogroup" aria-label="Location">
+          <label [class.on]="form.value.locationKind === 'radius'">
+            <input type="radio" formControlName="locationKind" value="radius" /> Around the clinic
+          </label>
+          <label [class.on]="form.value.locationKind === 'places'">
+            <input type="radio" formControlName="locationKind" value="places" /> Cities or areas
+          </label>
+        </div>
+
+        @if (form.value.locationKind === 'radius') {
+          <div class="field">
+            <label for="c-radius">People within <strong class="num">{{ form.value.radiusKm }} km</strong> of {{ brandLabel }}</label>
+            <input id="c-radius" type="range" min="1" max="25" step="1" formControlName="radiusKm" class="range" />
+            <span class="hint">Most patients travel less than 6 km for regular sessions.</span>
+          </div>
+        } @else {
+          <div class="field geo">
+            <label for="c-geo">Search for a city, area or PIN code</label>
+            <input id="c-geo" class="input" [formControl]="geoQuery" autocomplete="off" placeholder="Chennai" />
+            @if (geoResults().length) {
+              <ul class="geo-list" role="listbox" aria-label="Matching places">
+                @for (g of geoResults(); track g.key) {
+                  <li>
+                    <button type="button" (click)="addPlace(g)">
+                      {{ g.name }} <span>{{ g.type }}{{ g.region ? ', ' + g.region : '' }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+            @if (places().length) {
+              <ul class="chips" aria-label="Selected places">
+                @for (p of places(); track p.key) {
+                  <li>{{ p.name }} <button type="button" [attr.aria-label]="'Remove ' + p.name" (click)="removePlace(p.key)">×</button></li>
+                }
+              </ul>
+            }
+          </div>
+        }
+
+        <div class="row three">
+          <div class="field">
+            <label for="c-agemin">Youngest</label>
+            <input id="c-agemin" class="input num" type="number" min="18" max="65" formControlName="ageMin" />
+          </div>
+          <div class="field">
+            <label for="c-agemax">Oldest</label>
+            <input id="c-agemax" class="input num" type="number" min="18" max="65" formControlName="ageMax" />
+            <span class="hint">65 means 65 and over.</span>
+          </div>
+          <div class="field">
+            <label for="c-gender">Gender</label>
+            <select id="c-gender" class="input" formControlName="gender">
+              <option value="all">Everyone</option>
+              <option value="female">Women</option>
+              <option value="male">Men</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="c-place">Where the ad appears</label>
+          <select id="c-place" class="input" formControlName="placements">
+            <option value="automatic">Let Meta choose (recommended)</option>
+            <option value="facebook_instagram">Facebook and Instagram feeds, stories and reels only</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <!-- BUDGET -->
+      <fieldset>
+        <legend>Budget and dates</legend>
+        <div class="row">
+          <div class="field">
+            <label for="c-budget">Daily budget ({{ state.currency() }})</label>
+            <input id="c-budget" class="input num" type="number" min="100" step="50" formControlName="dailyBudget" />
+            @if (err('dailyBudget')) { <span class="error">Set at least ₹100 a day.</span> }
+            <span class="hint">{{ spendNote() }}</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="c-start">Starts</label>
+            <input id="c-start" class="input" type="datetime-local" formControlName="startTime" />
+          </div>
+          <div class="field">
+            <label for="c-end">Ends <span class="opt">(optional)</span></label>
+            <input id="c-end" class="input" type="datetime-local" formControlName="endTime" />
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- CREATIVE -->
+      <fieldset>
+        <legend>The ad</legend>
+
+        <div class="field">
+          <span class="label" id="img-label">Image</span>
+          <label class="drop" [class.has]="imagePreview()" for="c-image">
+            @if (imagePreview()) {
+              <img [src]="imagePreview()" alt="Selected ad image" />
+            } @else {
+              <span>Choose a photo of the clinic, the team or a session in progress. Square, at least 1080 × 1080.</span>
+            }
+          </label>
+          <input id="c-image" type="file" accept="image/jpeg,image/png" (change)="onImage($event)" class="visually-hidden" aria-labelledby="img-label" />
+          <span class="hint" aria-live="polite">
+            @switch (imageState()) {
+              @case ('uploading') { Uploading to Meta… }
+              @case ('ready') { Uploaded. }
+              @case ('error') { <span class="error">{{ imageError() }}</span> }
+              @default { JPG or PNG, up to 30 MB. }
+            }
+          </span>
+        </div>
+
+        <div class="field">
+          <label for="c-text">Main text</label>
+          <textarea id="c-text" class="input" formControlName="primaryText" rows="4"
+            placeholder="Knee rehab that measures progress at every visit. One physio from assessment to discharge, with evening slots until 8:30 pm."></textarea>
+          <span class="hint num">{{ (form.value.primaryText ?? '').length }} characters</span>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="c-head">Headline</label>
+            <input id="c-head" class="input" formControlName="headline" maxlength="255" placeholder="Book a knee assessment" />
+          </div>
+          <div class="field">
+            <label for="c-cta">Button</label>
+            <select id="c-cta" class="input" formControlName="cta">
+              @for (t of ctaTypes; track t) { <option [value]="t">{{ ctaLabels[t] }}</option> }
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="c-desc">Line under the headline <span class="opt">(optional)</span></label>
+          <input id="c-desc" class="input" formControlName="description" maxlength="255" placeholder="Anna Nagar · open until 8:30 pm" />
+        </div>
+
+        <div class="field">
+          <label for="c-landing">Send people to</label>
+          <select id="c-landing" class="input" (change)="pickLanding($any($event.target).value)">
+            @for (l of landings; track l.path) { <option [value]="l.path" [selected]="l.path === '/contact'">{{ l.label }}</option> }
+            <option value="">Another page (type the link below)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="c-link">Website link</label>
+          <input id="c-link" class="input" type="url" formControlName="linkUrl" />
+          @if (err('linkUrl')) { <span class="error">Enter a full link starting with https://</span> }
+          <label class="check">
+            <input type="checkbox" formControlName="addUtm" /> Tag the link so enquiries show which ad they came from
+          </label>
+        </div>
+
+        @if (policyNotes().length) {
+          <ul class="policy" aria-label="Policy checks">
+            @for (n of policyNotes(); track n.text) { <li [class]="n.tone">{{ n.text }}</li> }
+          </ul>
+        }
+      </fieldset>
+
+      <div class="submit-bar">
+        @if (submitError()) { <p class="submit-error" role="alert">{{ submitError() }}</p> }
+        @if (confirming()) {
+          <div class="confirm" role="alertdialog" aria-labelledby="confirm-t">
+            <p id="confirm-t">
+              Publish and spend up to <strong>{{ form.value.dailyBudget ?? 0 | money: state.currency() }} a day</strong> once Meta approves it?
+            </p>
+            <div class="confirm-actions">
+              <button type="button" class="btn btn-primary" [disabled]="submitting()" (click)="submit(true)">
+                {{ submitting() ? 'Publishing…' : 'Publish' }}
+              </button>
+              <button type="button" class="btn btn-ghost" [disabled]="submitting()" (click)="confirming.set(false)">Cancel</button>
+            </div>
+          </div>
+        } @else {
+          <button type="button" class="btn btn-primary" [disabled]="submitting() || imageState() === 'uploading'" (click)="requestPublish(true)">
+            Publish to Facebook and Instagram
+          </button>
+          <button type="button" class="btn btn-ghost" [disabled]="submitting() || imageState() === 'uploading'" (click)="requestPublish(false)">
+            {{ submitting() ? 'Saving…' : 'Save as paused' }}
+          </button>
+        }
+      </div>
+    </form>
+
+    <!-- PREVIEW -->
+    <aside class="preview" aria-label="Feed preview">
+      <p class="p-label">Feed preview</p>
+      <article class="post">
+        <header>
+          <span class="avatar" aria-hidden="true">{{ (state.page()?.name ?? 'K').charAt(0) }}</span>
+          <span>
+            <strong>{{ state.page()?.name ?? 'Your Page' }}</strong>
+            <small>Sponsored</small>
+          </span>
+        </header>
+        <p class="p-text">{{ form.value.primaryText || 'Your main text appears here.' }}</p>
+        <div class="p-img">
+          @if (imagePreview()) { <img [src]="imagePreview()" alt="" /> } @else { <span>Image</span> }
+        </div>
+        <footer>
+          <span class="p-meta">
+            <small>{{ displayDomain() }}</small>
+            <strong>{{ form.value.headline || 'Headline' }}</strong>
+            @if (form.value.description) { <small>{{ form.value.description }}</small> }
+          </span>
+          <span class="p-cta">{{ ctaLabel() }}</span>
+        </footer>
+      </article>
+      <p class="p-note">Meta adapts the layout for stories and reels. The final look may differ slightly by placement.</p>
+    </aside>
+  </div>
+}
